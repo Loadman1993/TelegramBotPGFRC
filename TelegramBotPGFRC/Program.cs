@@ -1,7 +1,8 @@
-﻿using TelegramBotPGFRC;
+﻿using Telegram.Bot.Types;
+using TelegramBotPGFRC;
 using static System.Net.Mime.MediaTypeNames;
 
-TelegramBotClient botClient = new TelegramBotClient("***************************************");
+TelegramBotClient botClient = new TelegramBotClient("5975891448:AAGw74g78o5PoWeBYrweW4pnvhnbJdKmgps");
 
 var metBot = new BotEngine(botClient);
 
@@ -50,231 +51,155 @@ public class BotEngine
     private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
 
-
-
-
         switch (update.Type)
         {
             case UpdateType.Message:
-
-                if (update.Message?.Text == "/start")
-                {
-                    await SendStartMenu(update.Message.Chat.Id, botClient, cancellationToken);
-                }
-                else
-                {
-                   
-                    //await botClient.SendTextMessageAsync(update.Message.Chat.Id, "Пожалуйста, подождите, пока я обработаю введенные данные...", cancellationToken: cancellationToken);
-                     string userText = update.Message.Text;
-                    Console.WriteLine($"Пользователь ввел: {userText}");
-                }
+                await ProcessMessageUpdateAsync(update, botClient, cancellationToken);
                 break;
 
             case UpdateType.CallbackQuery:
-
-                if (update.CallbackQuery?.Data == "Рост")
-                {
-                    await botClient.SendTextMessageAsync(
-                         chatId: update.CallbackQuery.Message.Chat.Id,
-                         replyMarkup: new ForceReplyMarkup(),
-                         text: "Введите Рост",
-                         cancellationToken: cancellationToken
-                    );
-
-                    bool statement = false;
-                    int maxAttempts = 3;
-                    int attempts = 0;
-
-                    while (!statement && attempts < maxAttempts)
-                    {
-                        var updates = await botClient.GetUpdatesAsync(offset: update.Id + 1, allowedUpdates: new List<UpdateType> { UpdateType.Message }, cancellationToken: cancellationToken);
-
-                        foreach (var newUpdate in updates)
-                        {
-                            if (newUpdate.Message?.Chat.Id == update.CallbackQuery.Message.Chat.Id && newUpdate.Message?.Text != null)
-                            {
-                                Console.WriteLine($"Пользователь ввел рост: {newUpdate.Message.Text}");
-
-                                if (decimal.TryParse(newUpdate.Message?.Text, out decimal height))
-                                {
-                                    PatientsAntropometrics[update.CallbackQuery.Message.Chat.Id] = new PatientsAntropometrics { Height = height };
-
-
-                                    await Console.Out.WriteLineAsync("ввел " + PatientsAntropometrics[update.CallbackQuery.Message.Chat.Id].Height);
-                                    statement = true;
-                                    break;
-                                }
-                                else
-                                {
-                                    await botClient.SendTextMessageAsync(chatId: newUpdate.Message?.Chat.Id, text: "Вы ввели некорректные данные", cancellationToken: cancellationToken);
-                                    attempts++;
-                                    await Task.Delay(10000);
-                                }
-                            }
-
-                            await Task.Delay(3000); // Пауза, чтобы не перегружать процессор
-                            Console.WriteLine(" Жду ввода...");
-                        }
-                    }
-
-                    if (statement)
-                    {
-                        var keyboard = new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithCallbackData("Креатинин") } });
-
-                        await botClient.SendTextMessageAsync(
-                            chatId: update.CallbackQuery.Message.Chat.Id,
-                            text: "Выберите действие:",
-                            replyMarkup: keyboard,
-                            cancellationToken: cancellationToken
-                        );
-                    }
-                }
-                else if (update.CallbackQuery?.Data == "Креатинин")
-                {
-                    await botClient.SendTextMessageAsync(
-                         chatId: update.CallbackQuery.Message.Chat.Id,
-                         replyMarkup: new ForceReplyMarkup(),
-                         text: "Введите концентрацию креатинина",
-                         cancellationToken: cancellationToken
-                    );
-
-                    bool statement = false;
-                    int maxAttempts = 3;
-                    int attempts = 0;
-
-                    while (!statement && attempts < maxAttempts)
-                    {
-                        var updates = await botClient.GetUpdatesAsync(offset: update.Id + 1, allowedUpdates: new List<UpdateType> { UpdateType.Message }, cancellationToken: cancellationToken);
-
-                        foreach (var newUpdate in updates)
-                        {
-                            if (newUpdate.Message?.Chat.Id == update.CallbackQuery.Message.Chat.Id && newUpdate.Message?.Text != null)
-                            {
-                                Console.WriteLine($"Пользователь ввел концентрацию креатинина: {newUpdate.Message.Text}");
-
-                                if (decimal.TryParse(newUpdate.Message?.Text, out decimal screatinine))
-                                {
-                                    PatientsAntropometrics[update.CallbackQuery.Message.Chat.Id].SCreatinine = screatinine;
-
-                                    await Console.Out.WriteLineAsync("ввел креатинина " + PatientsAntropometrics[update.CallbackQuery.Message.Chat.Id].SCreatinine);
-                                   
-                                    statement = true;
-                                    break;
-                                }
-                                else
-                                {
-                                    await botClient.SendTextMessageAsync(chatId: newUpdate.Message?.Chat.Id, text: "Вы ввели некорректные данные", cancellationToken: cancellationToken);
-                                    attempts++;
-                                    await Task.Delay(10000);
-                                }
-                            }
-
-                            await Task.Delay(3000); // Пауза, чтобы не перегружать процессор
-                            Console.WriteLine(" Жду ввода...");
-                        }
-                    }
-
-                    if (statement)
-                    {
-                        var keyboard = new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithCallbackData("Цистатин С"), InlineKeyboardButton.WithCallbackData("Пропустить") } });
-
-                        await botClient.SendTextMessageAsync(
-                            chatId: update.CallbackQuery.Message.Chat.Id,
-                            text: "Выберите действие:",
-                            replyMarkup: keyboard,
-                            cancellationToken: cancellationToken
-                        );
-                    }
-                }
-                else if (update.CallbackQuery?.Data == "Цистатин С")
-                {
-                    await botClient.SendTextMessageAsync(
-                         chatId: update.CallbackQuery.Message.Chat.Id,
-                         replyMarkup: new ForceReplyMarkup(),
-                         text: "Введите концентрацию Цистатина С",
-                         cancellationToken: cancellationToken
-                    );
-
-                    bool statement = false;
-                    int maxAttempts = 3;
-                    int attempts = 0;
-
-                    while (!statement && attempts < maxAttempts)
-                    {
-                        var updates = await botClient.GetUpdatesAsync(offset: update.Id + 1, allowedUpdates: new List<UpdateType> { UpdateType.Message }, cancellationToken: cancellationToken);
-
-                        foreach (var newUpdate in updates)
-                        {
-                            if (newUpdate.Message?.Chat.Id == update.CallbackQuery.Message.Chat.Id && newUpdate.Message?.Text != null)
-                            {
-                                Console.WriteLine($"Пользователь ввел концентрацию Цистатина С: {newUpdate.Message.Text}");
-
-                                if (decimal.TryParse(newUpdate.Message?.Text, out decimal sCystatinC))
-                                {
-                                    PatientsAntropometrics[update.CallbackQuery.Message.Chat.Id].SCystatinC = sCystatinC;
-
-                                    await Console.Out.WriteLineAsync("ввел Цистатина С " + PatientsAntropometrics[update.CallbackQuery.Message.Chat.Id].SCystatinC);
-                                    
-                                    statement = true;
-                                    break;
-                                }
-                                else
-                                {
-                                    await botClient.SendTextMessageAsync(chatId: newUpdate.Message?.Chat.Id, text: "Вы ввели некорректные данные", cancellationToken: cancellationToken);
-                                    attempts++;
-                                    await Task.Delay(10000);
-                                }
-                            }
-
-                            await Task.Delay(3000); // Пауза, чтобы не перегружать процессор
-                            Console.WriteLine(" Жду ввода...");
-                        }
-                    }
-
-                    if (statement)
-                    {
-                        var keyboard1 = new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithCallbackData("Рассёт") } });
-
-                        await botClient.SendTextMessageAsync(
-                            chatId: update.CallbackQuery.Message.Chat.Id,
-                            text: "Выберите действие:",
-                            replyMarkup: keyboard1, // Важно: добавляем клавиатуру в параметры метода
-                            cancellationToken: cancellationToken
-                        );
-                    }
-
-                }
-               
-
-
-                    else if (update.CallbackQuery?.Data == "Рассёт")
-                    {
-                        // Получение данных из словаря PatientsAntropometrics
-                        PatientsAntropometrics userAntropometrics = PatientsAntropometrics[update.CallbackQuery.Message.Chat.Id];
-
-                       
-                        var creatinineEstimator = new CreatinineBedsideSchwartz();
-
-                        // Вычисление оценки креатинина по формуле
-                        decimal creatinineEstimation = creatinineEstimator.Calculate(userAntropometrics);
-
-                        // Отправка результата пользователю
-                        await botClient.SendTextMessageAsync(
-                            chatId: update.CallbackQuery.Message.Chat.Id,
-                            text: $"Рост: {userAntropometrics.Height}\nКреатинин: {userAntropometrics.SCreatinine}\nЦистатин С: {userAntropometrics.SCystatinC}\nОценка креатинина: {creatinineEstimation}",
-                            cancellationToken: cancellationToken
-                        );
-                    }
-
-
-                
+                await ProcessCallbackQueryAsync(update, botClient, cancellationToken);
                 break;
 
             case UpdateType.Unknown:
                 Console.WriteLine("сработал Unknown");
                 break;
-        } 
-    
+        }
+
+        async Task ProcessMessageUpdateAsync(Update update, ITelegramBotClient botClient, CancellationToken cancellationToken)
+        {
+            if (update.Message?.Text == "/start")
+            {
+                await SendStartMenu(update.Message.Chat.Id, botClient, cancellationToken);
+            }
+            else
+            {
+                string userText = update.Message.Text;
+                Console.WriteLine($"Пользователь ввел: {userText}");
+            }
+        }
+
+        async Task ProcessCallbackQueryAsync(Update update, ITelegramBotClient botClient, CancellationToken cancellationToken)
+        {
+            if (update.CallbackQuery?.Data == "Рост")
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: update.CallbackQuery.Message.Chat.Id,
+                    replyMarkup: new ForceReplyMarkup(),
+                    text: "Введите Рост",
+                    cancellationToken: cancellationToken
+                );
+
+                bool statement = await GetUserInputAsync(update, botClient, cancellationToken, "Пользователь ввел рост:", height => PatientsAntropometrics[update.CallbackQuery.Message.Chat.Id] = new PatientsAntropometrics { Height = height });
+
+                if (statement)
+                {
+                    await SendActionKeyboardAsync(update, botClient, cancellationToken, "Креатинин");
+                }
+            }
+            else if (update.CallbackQuery?.Data == "Креатинин")
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: update.CallbackQuery.Message.Chat.Id,
+                    replyMarkup: new ForceReplyMarkup(),
+                    text: "Введите концентрацию креатинина",
+                    cancellationToken: cancellationToken
+                );
+
+                bool statement = await GetUserInputAsync(update, botClient, cancellationToken, "Пользователь ввел концентрацию креатинина:", screatinine => PatientsAntropometrics[update.CallbackQuery.Message.Chat.Id].SCreatinine = screatinine);
+
+                if (statement)
+                {
+                    await SendActionKeyboardAsync(update, botClient, cancellationToken, "Цистатин С");
+                }
+            }
+            else if (update.CallbackQuery?.Data == "Цистатин С")
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: update.CallbackQuery.Message.Chat.Id,
+                    replyMarkup: new ForceReplyMarkup(),
+                    text: "Введите концентрацию Цистатина С",
+                    cancellationToken: cancellationToken
+                );
+
+                bool statement = await GetUserInputAsync(update, botClient, cancellationToken, "Пользователь ввел концентрацию Цистатина С:", sCystatinC => PatientsAntropometrics[update.CallbackQuery.Message.Chat.Id].SCystatinC = sCystatinC);
+
+                if (statement)
+                {
+                    await SendActionKeyboardAsync(update, botClient, cancellationToken, "Рассёт");
+                }
+            }
+            else if (update.CallbackQuery?.Data == "Пропустить")
+            {
+                await SendActionKeyboardAsync(update, botClient, cancellationToken, "Рассёт");
+            }
+            else if (update.CallbackQuery?.Data == "Рассёт")
+            {
+                PatientsAntropometrics userAntropometrics = PatientsAntropometrics[update.CallbackQuery.Message.Chat.Id];
+                var creatinineEstimator = new CreatinineBedsideSchwartz();
+                decimal creatinineEstimation = creatinineEstimator.Calculate(userAntropometrics);
+
+                await botClient.SendTextMessageAsync(
+                    chatId: update.CallbackQuery.Message.Chat.Id,
+                    text: $"Рост: {userAntropometrics.Height}\nКреатинин: {userAntropometrics.SCreatinine}\nЦистатин С: {userAntropometrics.SCystatinC}\nОценка креатинина: {creatinineEstimation}",
+                    cancellationToken: cancellationToken
+                );
+            }
+        }
+
+        async Task<bool> GetUserInputAsync(Update update, ITelegramBotClient botClient, CancellationToken cancellationToken, string promptMessage, Action<decimal> saveValueAction)
+        {
+            bool statement = false;
+            int maxAttempts = 3;
+            int attempts = 0;
+
+            while (!statement && attempts < maxAttempts)
+            {
+                var updates = await botClient.GetUpdatesAsync(
+                    offset: update.Id + 1,
+                    allowedUpdates: new List<UpdateType> { UpdateType.Message },
+                    cancellationToken: cancellationToken
+                );
+
+                foreach (var newUpdate in updates)
+                {
+                    if (newUpdate.Message?.Chat.Id == update.CallbackQuery.Message.Chat.Id && newUpdate.Message?.Text != null)
+                    {
+                        Console.WriteLine($"{promptMessage} {newUpdate.Message.Text}");
+
+                        if (decimal.TryParse(newUpdate.Message.Text, out decimal value))
+                        {
+                            saveValueAction(value);
+                            statement = true;
+                            break;
+                        }
+                        else
+                        {
+                            await botClient.SendTextMessageAsync(chatId: newUpdate.Message?.Chat.Id, text: "Вы ввели некорректные данные", cancellationToken: cancellationToken);
+                            attempts++;
+                            await Task.Delay(10000);
+                        }
+                    }
+
+                    await Task.Delay(3000); // Pause to avoid overloading the processor
+                    Console.WriteLine(" Жду ввода...");
+                }
+            }
+
+            return statement;
+        }
+
+        async Task SendActionKeyboardAsync(Update update, ITelegramBotClient botClient, CancellationToken cancellationToken, string action)
+        {
+            var keyboard = new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithCallbackData(action) } });
+
+            await botClient.SendTextMessageAsync(
+                chatId: update.CallbackQuery.Message.Chat.Id,
+                text: "Выберите действие:",
+                replyMarkup: keyboard,
+                cancellationToken: cancellationToken
+            );
+        }
 
         if (update.Message is not { } message)
         {
